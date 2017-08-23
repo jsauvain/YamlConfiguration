@@ -1,0 +1,7 @@
+string: "Hello world"
+bool: true
+number: 5636
+dbl: 43.78
+smallObject:
+  username: "ben"
+  age: 20
