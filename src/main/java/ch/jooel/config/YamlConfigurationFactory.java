@@ -1,4 +1,4 @@
-package ch.joel.config;
+package ch.jooel.config;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.*;

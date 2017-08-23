@@ -1,4 +1,4 @@
-package ch.joel.config;
+package ch.jooel.config;
 
 import lombok.Getter;
 import lombok.ToString;
