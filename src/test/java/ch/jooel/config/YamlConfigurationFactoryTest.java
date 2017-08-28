@@ -50,4 +50,10 @@ public class YamlConfigurationFactoryTest {
 		}
 	}
 
+	@Test
+	public void testSaveConfig() throws Exception {
+		BigTestConfigClass object = new BigTestConfigClass("Ein String", true, 272, 239.31, new SmallObject("Kevin", 12));
+		factory.save(object, "abc/config.yml");
+	}
+
 }
