@@ -1,7 +1,9 @@
 package ch.jooel.config;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -29,6 +31,7 @@ import java.util.stream.Collectors;
 public class YamlConfigurationFactory implements ConfigurationLoader {
 
 	private ObjectMapper mapper;
+	private JsonFactory factory = new YAMLFactory();
 
 	public YamlConfigurationFactory() {
 		mapper = new ObjectMapper();
@@ -42,16 +45,21 @@ public class YamlConfigurationFactory implements ConfigurationLoader {
 	}
 
 	public void save(Object config, String file) {
-		File fl = new File(file);
 		try {
-			fl.createNewFile();
+			new File(file).createNewFile();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		try (OutputStream outputStream = new FileOutputStream(file)) {
 			JsonNode node = mapper.valueToTree(config);
-			JsonGenerator generator = new YAMLFactory().createGenerator(outputStream);
+			JsonGenerator generator = factory.createGenerator(outputStream);
 			mapper.writeTree(generator, node);
+		} catch (JsonProcessingException e) {
+			throw ConfigurationParsingException.builder("Json processing exception")
+					.setDetail(e.getMessage())
+					.setLocation(e.getLocation())
+					.setCause(e)
+					.build(file);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -96,6 +104,6 @@ public class YamlConfigurationFactory implements ConfigurationLoader {
 	}
 
 	private JsonParser createParser(InputStream inputStream) throws IOException {
-		return new YAMLFactory().createParser(inputStream);
+		return factory.createParser(inputStream);
 	}
 }
