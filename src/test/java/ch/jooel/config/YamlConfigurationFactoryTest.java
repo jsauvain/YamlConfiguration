@@ -2,6 +2,8 @@ package ch.jooel.config;
 
 import org.junit.Test;
 
+import java.io.File;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -48,6 +50,15 @@ public class YamlConfigurationFactoryTest {
 			assertTrue("Got exception", true);
 			System.out.println(ex.getMessage());
 		}
+	}
+
+	@Test
+	public void testSaveConfig() throws Exception {
+		BigTestConfigClass object = new BigTestConfigClass("Ein String", true, 272, 239.31, new SmallObject("Kevin", 12));
+		File file = new File("target/testing");
+		file.mkdirs();
+		factory.save(object, "target/testing/config.yml");
+		assertEquals(factory.load("target/testing/config.yml", BigTestConfigClass.class), object);
 	}
 
 }
