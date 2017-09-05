@@ -4,8 +4,7 @@ import org.junit.Test;
 
 import java.io.File;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class YamlConfigurationFactoryTest {
 
@@ -13,7 +12,7 @@ public class YamlConfigurationFactoryTest {
 
 	@Test
 	public void loadNormalObject() throws Exception {
-		TestConfigClass configClass = factory.load("src/test/resources/config.yml", TestConfigClass.class);
+		TestConfigClass configClass = factory.load(TestConfigClass.class, "src/test/resources/config.yml");
 		assertEquals("Hello world", configClass.getString());
 		assertEquals(true, configClass.isBool());
 		assertEquals(5636, configClass.getNumber());
@@ -23,7 +22,7 @@ public class YamlConfigurationFactoryTest {
 
 	@Test
 	public void loadBigObject() throws Exception {
-		BigTestConfigClass configClass = factory.load("src/test/resources/big-config.yml", BigTestConfigClass.class);
+		BigTestConfigClass configClass = factory.load(BigTestConfigClass.class, "src/test/resources/big-config.yml");
 		System.out.println(configClass);
 		assertEquals("Hello world", configClass.getString());
 		assertEquals(true, configClass.isBool());
@@ -35,7 +34,7 @@ public class YamlConfigurationFactoryTest {
 
 	@Test
 	public void testExtendedObject() throws Exception {
-		ExtendedObject object = factory.load("src/test/resources/extended.yml", ExtendedObject.class);
+		ExtendedObject object = factory.load(ExtendedObject.class, "src/test/resources/extended.yml");
 		System.out.println(object);
 		assertEquals("ben", object.getUsername());
 		assertEquals(20, object.getAge());
@@ -45,7 +44,8 @@ public class YamlConfigurationFactoryTest {
 	@Test
 	public void testInvalidConfig() throws Exception {
 		try {
-			factory.load("src/test/resources/invalid.yml", TestConfigClass.class);
+			factory.load(TestConfigClass.class, "src/test/resources/invalid.yml");
+			assertFalse(true);
 		} catch (ConfigurationParsingException ex) {
 			assertTrue("Got exception", true);
 			System.out.println(ex.getMessage());
@@ -58,7 +58,20 @@ public class YamlConfigurationFactoryTest {
 		File file = new File("target/testing");
 		file.mkdirs();
 		factory.save(object, "target/testing/config.yml");
-		assertEquals(factory.load("target/testing/config.yml", BigTestConfigClass.class), object);
+		assertEquals(factory.load(BigTestConfigClass.class, "target/testing/config.yml"), object);
 	}
 
+	@Test
+	public void testSaveDefaults() throws Exception {
+		factory.saveDefaults(DefaultConfigClass.class, "target/testing/default.yml");
+		assertEquals(factory.load(DefaultConfigClass.class, "target/testing/default.yml"), new DefaultConfigClass());
+	}
+
+	@Test
+	public void testUpdateConfig() throws Exception {
+		OldConfig config = new OldConfig(4, "Hello World");
+		factory.save(config, "target/testing/update.yml");
+		NewConfig newConfig = factory.updateConfig(NewConfig.class, "target/testing/update.yml");
+		assertEquals(newConfig, new NewConfig(4, "Hello World", false));
+	}
 }

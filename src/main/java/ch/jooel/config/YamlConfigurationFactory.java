@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import com.fasterxml.jackson.databind.node.TreeTraversingParser;
@@ -28,10 +29,20 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * This API will store objects into yaml and also read objects from yaml.
+ * If you are updating your config, just call {@link #updateConfig(Class, String)}.
+ * This will write the new values into the config
+ * If you call {@link #saveDefaults(Class, String)} it will store the default values in this class.
+ * As example {@code private int number = 5} will store "5"
+ *
+ * IMPORTANT: The configuration class MUST have getters and setters
+ */
 public class YamlConfigurationFactory implements ConfigurationLoader {
 
 	private ObjectMapper mapper;
 	private JsonFactory factory = new YAMLFactory();
+
 
 	public YamlConfigurationFactory() {
 		mapper = new ObjectMapper();
@@ -42,9 +53,47 @@ public class YamlConfigurationFactory implements ConfigurationLoader {
 		mapper.registerModule(new JavaTimeModule());
 		mapper.setPropertyNamingStrategy(new PropertyNamingStrategy());
 		mapper.enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+		mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 	}
 
-	public void save(Object config, String file) {
+	/**
+	 * Use this method to store the default values of a class.
+	 * As example {@code private int number = 5} will store "number: 5"
+	 * see {@link #save(Object, String)}
+	 *
+	 * @param clazz the class of the object
+	 * @param file  the file it should store to
+	 */
+	public void saveDefaults(Class clazz, String file) {
+		try {
+			save(clazz.newInstance(), file);
+		} catch (InstantiationException | IllegalAccessException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Use this method to update a given config.
+	 * It will load the config into the given class and store it back to the file.
+	 * This affects that the new values in the object will be stored
+	 *
+	 * @param clazz the class of the object
+	 * @param file the file it should store to
+	 * @return an instance of the given class with the values from the yaml file
+	 */
+	public <T> T updateConfig(Class<T> clazz, String file) {
+		T object = load(clazz, file);
+		save(object, file);
+		return object;
+	}
+
+	/**
+	 * Use this method to save a object into a file
+	 *
+	 * @param config the object to be stored
+	 * @param file the file it should be stored to
+	 */
+	public <T> void save(T config, String file) {
 		try {
 			new File(file).createNewFile();
 		} catch (IOException e) {
@@ -65,7 +114,14 @@ public class YamlConfigurationFactory implements ConfigurationLoader {
 		}
 	}
 
-	public <T> T load(String path, Class<T> clazz) {
+	/**
+	 * Use this method to load a yaml file into an object
+	 *
+	 * @param clazz the class of the object which should be generated
+	 * @param path the path of the yaml file
+	 * @return an instance of the given class with the values from the yaml file
+	 */
+	public <T> T load(Class<T> clazz, String path) {
 		try (InputStream inputStream = new FileInputStream(path)) {
 			JsonNode node = mapper.readTree(createParser(inputStream));
 			if (node == null)
