@@ -70,6 +70,7 @@ public class YamlConfigurationFactoryTest {
 	@Test
 	public void testUpdateConfig() throws Exception {
 		OldConfig config = new OldConfig(4, "Hello World");
+		new File("target/testing").mkdirs();
 		factory.save(config, "target/testing/update.yml");
 		NewConfig newConfig = factory.updateConfig(NewConfig.class, "target/testing/update.yml");
 		assertEquals(newConfig, new NewConfig(4, "Hello World", false));
