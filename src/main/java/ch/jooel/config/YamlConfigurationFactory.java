@@ -19,6 +19,8 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,9 +37,10 @@ import java.util.stream.Collectors;
  * This will write the new values into the config
  * If you call {@link #saveDefaults(Class, String)} it will store the default values in this class.
  * As example {@code private int number = 5} will store "5"
- *
+ * <p>
  * IMPORTANT: The configuration class MUST have getters and setters
  */
+@Slf4j
 public class YamlConfigurationFactory implements ConfigurationLoader {
 
 	private ObjectMapper mapper;
@@ -68,7 +71,7 @@ public class YamlConfigurationFactory implements ConfigurationLoader {
 		try {
 			save(clazz.newInstance(), file);
 		} catch (InstantiationException | IllegalAccessException e) {
-			e.printStackTrace();
+			log.error("Cannot create a new instance, there must be an empty constructor", e);
 		}
 	}
 
@@ -78,7 +81,7 @@ public class YamlConfigurationFactory implements ConfigurationLoader {
 	 * This affects that the new values in the object will be stored
 	 *
 	 * @param clazz the class of the object
-	 * @param file the file it should store to
+	 * @param file  the file it should store to
 	 * @return an instance of the given class with the values from the yaml file
 	 */
 	public <T> T updateConfig(Class<T> clazz, String file) {
@@ -91,13 +94,13 @@ public class YamlConfigurationFactory implements ConfigurationLoader {
 	 * Use this method to save a object into a file
 	 *
 	 * @param config the object to be stored
-	 * @param file the file it should be stored to
+	 * @param file   the file it should be stored to
 	 */
 	public <T> void save(T config, String file) {
 		try {
 			new File(file).createNewFile();
 		} catch (IOException e) {
-			e.printStackTrace();
+			log.error("cannot create new file", e);
 		}
 		try (OutputStream outputStream = new FileOutputStream(file)) {
 			JsonNode node = mapper.valueToTree(config);
@@ -110,7 +113,7 @@ public class YamlConfigurationFactory implements ConfigurationLoader {
 					.setCause(e)
 					.build(file);
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("General Exception", e);
 		}
 	}
 
@@ -118,7 +121,7 @@ public class YamlConfigurationFactory implements ConfigurationLoader {
 	 * Use this method to load a yaml file into an object
 	 *
 	 * @param clazz the class of the object which should be generated
-	 * @param path the path of the yaml file
+	 * @param path  the path of the yaml file
 	 * @return an instance of the given class with the values from the yaml file
 	 */
 	public <T> T load(Class<T> clazz, String path) {
@@ -156,6 +159,20 @@ public class YamlConfigurationFactory implements ConfigurationLoader {
 					.build(path);
 		} catch (IOException ex) {
 			throw new RuntimeException("Cannot load config");
+		}
+	}
+
+	/**
+	 * This will copy a resource file
+	 * @param resourcePath resource path
+	 * @param path final path
+	 */
+	public void copyFromResource(String resourcePath, String path) {
+		try (InputStream is = this.getClass().getResourceAsStream(resourcePath);
+			 OutputStream os = new FileOutputStream(path)) {
+			IOUtils.copy(is, os);
+		} catch (IOException ex) {
+			log.error("Cannot copy resource file", ex);
 		}
 	}
 
