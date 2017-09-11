@@ -124,6 +124,7 @@ public class YamlConfigurationFactory implements ConfigurationLoader {
 	 * @param path  the path of the yaml file
 	 * @return an instance of the given class with the values from the yaml file
 	 */
+	@Override
 	public <T> T load(Class<T> clazz, String path) {
 		try (InputStream inputStream = new FileInputStream(path)) {
 			JsonNode node = mapper.readTree(createParser(inputStream));
@@ -175,6 +176,22 @@ public class YamlConfigurationFactory implements ConfigurationLoader {
 			log.error("Cannot copy resource file", ex);
 		}
 	}
+
+	/**
+	 * This will copy a resource file
+	 *
+	 * @param resourcePath resource path
+	 * @param output       final output file
+	 */
+	public void copyFromResource(String resourcePath, File output) {
+		try (InputStream is = this.getClass().getResourceAsStream(resourcePath);
+			 OutputStream os = new FileOutputStream(output)) {
+			IOUtils.copy(is, os);
+		} catch (IOException ex) {
+			log.error("Cannot copy resource file", ex);
+		}
+	}
+
 
 	private JsonParser createParser(InputStream inputStream) throws IOException {
 		return factory.createParser(inputStream);
